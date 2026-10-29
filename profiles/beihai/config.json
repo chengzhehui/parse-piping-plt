@@ -1,0 +1,14 @@
+{
+  "project": "北海项目",
+  "default_unit": "PD60",
+  "input_pattern": "北海项目/PLT文件转换/{unit}",
+  "idf_pattern": "北海项目/IDF/{unit}",
+  "weld_table": "北海项目/焊口表.csv",
+  "pdf_folder": "转换标注PDF",
+  "font_height_mm": 6.0,
+  "weld_diameter_mm": 12.0,
+  "compact_frames": true,
+  "management_annotations": true,
+  "drawing_bounds_mm": [27, 27, 402, 409],
+  "hit_offset_mm": [0, 0]
+}
