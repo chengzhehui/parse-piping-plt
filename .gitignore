@@ -7,6 +7,8 @@ venv/
 .env.*
 
 # Local archives, source datasets and generated audit evidence.
+/历史运行结果/
+/运行记录/
 /archive/
 /beihai_audit/
 /PDMS_Export/
@@ -17,6 +19,7 @@ venv/
 /outputs/
 /out/
 /tmp/
+.audit/
 
 # Exported drawings, engineering tables and rendering products.
 *.plt

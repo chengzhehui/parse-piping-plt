@@ -1,0 +1,12 @@
+{
+  "page_workers": 8,
+  "spool_annotations": false,
+  "management_kinds": [
+    "support"
+  ],
+  "pdf_folder": "北海PD01_转换标注PDF",
+  "pipeline_aliases": {
+    "40-POW-01006-202-C1": "40-POW-01006-106-C1"
+  },
+  "native_topology_ports": true
+}

@@ -1,85 +1,11 @@
-北海项目固定入口
+通用出图入口：run_pipeline.py
+输入：IDF、PLT、HIT，以及按需提供的焊口/支架/阀门/法兰 CSV。
+使用参数：python run_pipeline.py --help
+详细说明及示例：项目根目录 README.md。
 
-在任意工作目录运行：
-  python "D:\研发工作\Cursor\IDF解析\parse-piping-plt\run_beihai.py"
-或：
-  & "D:\研发工作\Cursor\IDF解析\parse-piping-plt\run_beihai.ps1" -Unit PD60 -Workers 2
+北海兼容入口：python run_beihai.py --unit 单元号
+北海单元配置：profiles/beihai/units/。
+通用入口不加载这些单元专属配置。
 
-其他单元：
-  python run_beihai.py --unit PD61
-
-默认输入：
-  北海项目/PLT文件转换/{单元}/，递归查找原始 PLT 及同名 HIT。
-  北海项目/IDF/{单元}/，按管线号读取同批 IDF。
-  北海项目/焊口表.csv，GB18030 或 UTF-8，保留原行号。
-可覆盖：--input-dir、--idf-dir、--weld-table、--out-dir。
-仅复核一条管线：--pipeline 50-SIO2-66906-201（独立复核子文件夹及独立问题清单）。
-
-默认交付：
-  输入文件夹/转换标注PDF/管线号_Sht_页码.pdf
-  输入文件夹/北海{单元}_标注问题清单.xlsx
-不会输出合并PDF、PNG、SVG或中间JSON；中间文件使用系统临时目录。
-同名PDF在重跑时更新；建议每个输入目录只保留一个导出版本。
-
-样式：6 mm 字高、固定12 mm红色焊口圈、紧凑红色双框管段号、蓝色紧凑方框管理编号。
-默认同时读取焊口表所在目录的阀门表.csv、法兰表.csv、支架表.csv，可用 --management-tables-dir 指定目录。
-仅输出焊口和管段时使用 --no-management；固定入口默认生成五类编号完整标注。
-字体使用系统 SimHei。依赖 PyMuPDF、fonttools、numpy、openpyxl 及同级 Chengda SHA 布局源码。
-本配置已验证北海 A2 横向图框（材料栏在右）；其他图框需另行适配，禁止盲目沿用区域。
-
-定位与审核：
-读取 IDF 300 原点记录（记录单位米），不硬编码某单元的原点平移。
-HIT 通过 UCI 关联 IDF 元件，再与原图符号端点、粗管中心轴互相核对。
-保留隐式焊口；管内附加焊口仅在两个端点同页且有原图直轴依据时插值，进入审核清单。
-不以IDF全局坐标直接线性缩放到等轴图，也不为原表空白管段号自动编新号。
-管段按原表编号逐管线逐页去重，优先选择S焊口邻接的IDF元件。
-落点取该元件原图实际笔画有效段的中点，记录PLT字节偏移；在其他焊口处分割可用区间。
-不使用整个管段的坐标平均，也不再限制为从焊口短移3.75mm；原图尺寸线和焊口填充线不作为元件线条。
-偏转管使用已定位焊口及支架HIT控制点核对所属元件，避免硬套投影角度造成误选。
-有材料续页时仍输出该页原图；HIT为空本身不等于文件错误。
-无法可靠定位的焊口不猜测绘制，写入“未标注编号”；多个候选或规则匹配写入“自动匹配需审核”。
-PDF页数、图幅和编号文本进行独立核对，另核对标注框重叠、引线交叉、引线穿框。
-这些校验不等于人工确认物理焊口位置，也不代表引线完全不穿原图线条。
-PDMS原始导出日志问题在独立工作表列出，不与本工具标注失败混为一类。
-管理编号通过管线号＋完整UCI定位，沿用同一页的6 mm字高、0.2 mm引线边框和统一避让布局。
-法兰表分号分隔的多个UCI作为一个连接组处理，优先定位到组内真实FLANGE元件，不重复标号。
-同号支架只有在表坐标一致、HIT同页同位置时才合并；来源UCI及每一行记录全部保留。
-原图未输出的实体法兰不使用焊口的管轴插值代替，写入“未标注编号”。
-内部“管理编号逐行核对”记录覆盖三张表的每一来源行，内部单页转换结果分别列出三类管理编号数量。
-
-阀门引线落点：北海HIT为端部/邻接法兰定位，不直接作为阀体中心。
-VBFL按阀体双三角轮廓、CKFL/CKSW按止回阀阀瓣阀座轮廓识别两端，结合IDF方向选择唯一阀体后取中点。
-交付清单仅保留“未标注编号”和确有疑点的“已标注需核对”；只有存在布局问题时才增加“布局需处理”。
-成功记录、统计、调试信息、PDMS原始日志及历史修复记录均存入内部 beihai_audit/render_records/{单元}.json，不放入交付清单。
-校验脚本从该内部记录验证来源覆盖、字体颜色、布局、阀门中心和管段元件中点的实际PDF引线落点。
-
-按页多进程：
-  python run_beihai.py --unit PD60 --workers 2
-默认2个页面工作进程；各页独立解码、布局、PDF输出及核验，主进程汇总结果和问题清单。
-每个工作进程的数值库线程限制为1，避免进程数与数值库线程叠加。
-每秒采样任务进程树及整机CPU/内存，每30秒输出资源状态。
-采样和评估文件位于 beihai_audit/performance/，不增加交付问题清单工作表。
-本轮PD60实测2进程331.65秒；193个管段元件线条中点、81个阀门中心、63页PDF均通过独立校验。
-资源评估建议下一轮先测试4进程（--workers 4或-Workers 4），本轮未实测4进程吞吐量；默认仍为2。
-
-问题排查时先做关联预检（不跑布局、不改PDF）：
-  python tools/preflight_beihai_annotations.py --unit PD60 --revision latest
-系列修改应固定初始问题清单作为比较基准：
-  python tools/preflight_beihai_annotations.py --revision R1_example --baseline-workbook 初始问题清单.xlsx
-每轮预检输出 beihai_audit/preflight_轮次.json，包含新找回、仍未定位、原位置变化和原标注丢失。
-确认新规则后再执行固定转换入口，完成后运行：
-  python tools/verify_beihai_outputs.py --unit PD60
-  python -m unittest discover -s tests -p "test_beihai_*.py"
-
-目录整理（2026-10-29）：
-统一入口为根目录 run_beihai.py / run_beihai.ps1；配置保持 profiles/beihai/config.json。
-转换编排在 profiles/beihai/workflow，解析与布局模块在 profiles/beihai/parser。
-历史样例、试出图、预检轮次、截图与旧问题清单归档至 archive/2026-10-29。
-当前内部转换记录和性能监测仍保留 beihai_audit/render_records 与 beihai_audit/performance。
-已重命名的PDF交付文件夹可在校验时通过 --out-dir 指定；无需移动既有交付文件。
-
-PD60逐行核对记录：原57个未标注焊口已恢复56个，原9个未标注管段号全部恢复。
-95/96及126是独立元件起始记录，不能把其后-39的UCI归给前一个120或35。
-NRSC短节的HIT与坐标引线尖重合时，必须用原图实体轮廓的端口校验，不将任意原图顶点当作管端。
-40-POW-69701-106的12号在IDF第136行形成32mm回折，位于第134行NRSC内部，原图无独立管端，保留待设计确认。
-“原未标注逐行核对”“规则修改预检记录”“原已标注位置修正”等历史审计数据保存在内部JSON中，不增加交付清单的工作表。
+历史运行结果和运行记录保存在项目内的同名目录，Git忽略这两个目录，不提交。
+布局核心位于本项目内，不再依赖 parse-piping-sha 项目。

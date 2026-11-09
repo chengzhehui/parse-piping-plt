@@ -9,12 +9,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
-from project_paths import SHA_PARSER
-if not SHA_PARSER.is_dir():
-    raise FileNotFoundError(f'Chengda layout source is required: {SHA_PARSER}')
-sys.path.insert(0,str(SHA_PARSER))
-sys.path.insert(0,str(SHA_PARSER.parent/'workflow'))
-from inject_sha_weld_callouts import (
+from plt_layout_core import (
     PointTarget,LayoutRegion,candidate_options,solve_page_layout,
     solve_page_layout_in_preferred_bands,candidate_conflict_reasons,
     nearest_segment_guide,leader_source_crossing_counts,leader_corridor_congestion,
@@ -23,8 +18,8 @@ from inject_sha_weld_callouts import (
     CalloutPlacement,PlacementCandidate,marker_edge,boxes_overlap,segment_intersects_box,
     leader_clear_of_source,peer_root_direction_congestion,
 )
-from chengda_management_callouts import label_box,MANAGEMENT_FONT_FAMILY,SPOOL_FONT_HEIGHT
-from sha_to_svg_prototype import SHEET_UNIT
+from plt_label_metrics import label_box,MANAGEMENT_FONT_FAMILY,SPOOL_FONT_HEIGHT
+from plt_layout_core import SHEET_UNIT
 
 from analyze_plt_bundle import svg_text
 from pdms_weld_geometry import native_paths
@@ -186,7 +181,7 @@ def layout(data,targets,heavy_segments,annotation_scale=2.0,font_height_mm=None,
             raise ValueError(f'No placement candidates for {target["key"]}')
         options.append(opts)
         inventory.append(len(opts))
-    audit={'solver_source':str(SHA_PARSER/'inject_sha_weld_callouts.py'),
+    audit={'solver_source':str(Path(__file__).with_name('plt_layout_core.py')),
            'scope':'weld-management-spool joint layout','units_per_mm':40,
            'annotation_style':style.as_dict(),
            'candidate_counts':inventory,'annotation_count':len(targets)}

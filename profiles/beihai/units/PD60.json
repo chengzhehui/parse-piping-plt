@@ -1,0 +1,10 @@
+{
+  "page_workers": 8,
+  "spool_annotations": false,
+  "management_kinds": [
+    "support"
+  ],
+  "pdf_folder": "北海PD60_转换标注PDF",
+  "idf_pattern": "北海项目/IDF/{unit}",
+  "native_topology_ports": true
+}

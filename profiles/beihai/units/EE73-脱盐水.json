@@ -1,0 +1,140 @@
+{
+  "page_workers": 8,
+  "spool_annotations": false,
+  "management_kinds": [
+    "support"
+  ],
+  "pdf_folder": "北海EE73-脱盐水_转换标注PDF",
+  "idf_pattern": "北海项目/PLT文件转换/{unit}/PLT",
+  "table_pipeline_aliases": {
+    "150-DI-73324-202": "150-DI-73310-202",
+    "100-PW-73333-202": "80-PW-73333-202",
+    "100-PW-73334-202": "80-PW-73334-202",
+    "100-PW-73335-202": "80-PW-73335-202",
+    "80-PW-73343-202": "80-PW-73347-202"
+  },
+  "confirmed_pipeline_renames": {
+    "150-DI-73324-202": "150-DI-73310-202",
+    "100-PW-73333-202": "80-PW-73333-202",
+    "100-PW-73334-202": "80-PW-73334-202",
+    "100-PW-73335-202": "80-PW-73335-202",
+    "80-PW-73343-202": "80-PW-73347-202"
+  },
+  "weld_reference_idf_pattern": "北海项目/IDF/{unit}",
+  "weld_reference_pipeline_aliases": {
+    "150-DI-73324-202": "150-DI-73310-202",
+    "100-PW-73333-202": "80-PW-73333-202",
+    "100-PW-73334-202": "80-PW-73334-202",
+    "100-PW-73335-202": "80-PW-73335-202",
+    "80-PW-73343-202": "80-PW-73347-202",
+    "40-DI-73321-202": "40-DI-73320-202"
+  },
+  "weld_reference_recovery": "ports",
+  "weld_interface_require_glyph": false,
+  "native_topology_ports": true,
+  "weld_pipeline_transfers": [
+    {
+      "source_row": 15780,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "15",
+      "source_coordinate_mm": [
+        200.0,
+        -16422.0,
+        2650.02
+      ]
+    },
+    {
+      "source_row": 15781,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "16",
+      "source_coordinate_mm": [
+        200.0,
+        -16454.0,
+        2618.02
+      ]
+    },
+    {
+      "source_row": 15782,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "17",
+      "source_coordinate_mm": [
+        200.0,
+        -16454.0,
+        2503.84
+      ]
+    },
+    {
+      "source_row": 15783,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "18",
+      "source_coordinate_mm": [
+        232.0,
+        -16454.0,
+        2471.84
+      ]
+    },
+    {
+      "source_row": 15784,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "19",
+      "source_coordinate_mm": [
+        1382.0,
+        -16454.0,
+        2471.84
+      ]
+    },
+    {
+      "source_row": 15785,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "20",
+      "source_coordinate_mm": [
+        1446.0,
+        -16454.0,
+        2471.84
+      ]
+    },
+    {
+      "source_row": 15786,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "21",
+      "source_coordinate_mm": [
+        2396.0,
+        -16454.0,
+        2471.84
+      ]
+    },
+    {
+      "source_row": 15787,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "22",
+      "source_coordinate_mm": [
+        2428.0,
+        -16454.0,
+        2439.84
+      ]
+    }
+  ],
+  "management_pipeline_transfers": [
+    {
+      "kind": "support",
+      "source_row": 1763,
+      "source_pipeline": "40-DI-73320-202",
+      "drawing_pipeline": "40-DI-73321-202",
+      "number": "SP1",
+      "ref": "22993/140514",
+      "source_coordinate_mm": [
+        200,
+        -16000,
+        2650.02
+      ]
+    }
+  ]
+}

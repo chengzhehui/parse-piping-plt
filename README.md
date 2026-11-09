@@ -1,87 +1,73 @@
-# PLT 管线图转换与编号标注
+# PLT 单线图还原与编号标注
 
-北海项目固定入口，沿用 PD60 已确认的转换、定位和布局规则。输出按管线号和 sheet 号命名的单页 PDF，以及只含待处理条目的问题清单。
+Git 仓库只提交代码、配置、测试和说明；本地的历史资料与运行记录目录由 Git 忽略。输入 PDMS 导出的 IDF、PLT、HIT 及编号 CSV，输出按管线号和 sheet 命名的单页 PDF、简明问题清单和运行证据。
 
-## 日常转换
+## 通用入口
 
-在本目录运行：
-
-```powershell
-python run_beihai.py --list-units
-python run_beihai.py --unit PD60 --workers 2
-```
-
-PowerShell 入口等效，支持从其他工作目录用完整路径调用：
+安装依赖：
 
 ```powershell
-.\run_beihai.ps1 -Unit PD60 -Workers 2
+python -m pip install -r requirements.txt
 ```
 
-后续单元将 `PD60` 替换为实际单元号即可，无需复制脚本。默认 2 个页面进程；4 进程可用 `--workers 4` 试跑，尚未进行全单元性能验证。
-
-默认输入相对于上一级 `IDF解析` 目录：
-
-| 输入 | 路径 |
-|---|---|
-| 原图与 UCI 索引 | `北海项目/PLT文件转换/{单元}/` 内的同名 `.plt`、`.hit` |
-| 对应模型 | `北海项目/IDF/{单元}/{管线号}.idf` |
-| 焊口、管段编号 | `北海项目/焊口表.csv` |
-| 三类管理编号 | 同目录 `阀门表.csv`、`法兰表.csv`、`支架表.csv` |
-
-每个单元只放一套导出版本，避免相同管线、sheet 的重复文件。默认同时标注焊口、管段、阀门、法兰、支架；仅需焊口和管段时加 `--no-management`。
-
-默认交付到该单元输入目录：
-
-- `转换标注PDF/{管线号}_Sht_{页码}.pdf`
-- `北海{单元}_标注问题清单.xlsx`
-
-重跑更新同名结果。问题清单保留“未标注编号”“已标注需核对”，有布局问题时才增加“布局需处理”。成功明细与资源监测写入本项目 `beihai_audit/`，不混入交付清单。
-
-更多参数通过 `python run_beihai.py --help` 查看。可覆盖 `--input-dir`、`--idf-dir`、`--weld-table`、`--management-tables-dir`、`--out-dir`。单管线复核使用：
+指定输入、输出目录：
 
 ```powershell
-python run_beihai.py --unit PD60 --pipeline 50-SIO2-66906-201 --workers 2
+python run_pipeline.py --input-dir "D:\数据\PLT" --idf-dir "D:\数据\IDF" --hit-dir "D:\数据\HIT" --weld-table "D:\数据\焊口表.csv" --management-tables-dir "D:\数据\编号表" --out-dir "D:\结果\单线图" --workers 8
 ```
 
-单管线默认写入独立复核子目录和独立问题清单。
+也可以单独指定三类管理表，文件名可以自定义：
 
-## 目录组织
+```powershell
+python run_pipeline.py --input-dir "D:\数据\PLT" --idf-dir "D:\数据\IDF" --hit-dir "D:\数据\HIT" --weld-table "D:\数据\welds.csv" --support-table "D:\数据\supports.csv" --valve-table "D:\数据\valves.csv" --flange-table "D:\数据\flanges.csv" --out-dir "D:\结果\单线图"
+```
+
+- PLT 命名为 `{管线号}_Sht_{页码}.plt`，IDF 为 `{管线号}.idf`，HIT 与 PLT 同名。PLT 目录递归读取；IDF、独立 HIT 目录按文件名查找。
+- HIT 位于 PLT 旁时省略 `--hit-dir`。
+- `--management-tables-dir` 仅读取目录内实际存在的 `支架表.csv`、`阀门表.csv`、`法兰表.csv`；单独指定表格可覆盖同类文件。
+- 编号表均为 EP3D CSV，支持 UTF-8 和 GB18030。焊口按管线号、焊点编号和焊点位置关联，管理编号按管线号、编号及完整 UCI 关联。
+- 表格可以按需提供；省略焊口表时只标管理编号，全部省略则仅还原原图。
+- 默认不按管理表的单元号筛选；`--unit PD20` 可限定单元，但通用入口始终不加载北海单元专属配置。
+- `--pipeline 管线号` 处理指定管线；`--spool` 根据焊口表增加管段号；`--workers` 指定页面工作进程数，默认 8。
+- 当前图幅规则为北海已验证的 A2 横向图框，字高 6mm、固定 12mm 焊口红圈、蓝色紧凑管理编号框。使用 Windows SimHei 字体。
+
+输出目录包含：
 
 ```text
-run_beihai.py / run_beihai.ps1   日常转换入口
-profiles/beihai/
-  config.json                  已验证的样式与图框配置
-  workflow/                    单元转换编排
-  parser/                      PLT/HIT/IDF、编号定位、布局与 PDF 模块
-  运行说明.txt                  定位规则及复核说明
-tools/                         关联预检、完整结果校验
-tests/                         当前规则回归测试
-beihai_audit/
-  render_records/              当前内部转换审计记录
-  performance/                 CPU、内存采样与性能评估
-archive/2026-10-29/             历史样例、试出图、调试证据与源码快照
+PDF/{管线号}_Sht_{页码}.pdf
+标注问题清单.xlsx
+.audit/                       定位证据及 CPU/内存记录
 ```
 
-部分解析模块保留早期名称（如 `render_complete_pdms.py`），它们仍提供现行入口所需的几何或布局函数，属于正式运行依赖。历史独立实验脚本已移入归档。
+输出目录必须位于代码项目之外。运行保留原始导出文件和 CSV。无法可靠定位的编号进入问题清单，不猜测焊口编号或 UCI。
 
-Git 仓库只保存正式代码、配置、说明及校验/回归测试代码。`archive/`、`beihai_audit/`、原始导出文件、业务表格和 PDF/预览等生成产物仅在本地保留，不提交。克隆仓库后需自行准备项目数据；使用 PD60 实例和历史证据的回归测试也需要对应本地资料。
+## 代码组织
 
-## 预检与校验
-
-```powershell
-python tools/preflight_beihai_annotations.py --unit PD60 --revision latest
-python tools/verify_beihai_outputs.py --unit PD60
-python -m unittest discover -s tests -p "test_beihai_*.py"
+```text
+run_pipeline.py                通用输入、输出入口
+run_beihai.py / run_beihai.ps1  北海项目兼容入口
+profiles/beihai/config.json    图幅、字体和标注配置
+profiles/beihai/units/         北海单元名称、坐标及参考模型配置
+profiles/beihai/workflow/      出图编排及按页多进程
+profiles/beihai/parser/        PLT/HIT/IDF解析、编号关联、布局及PDF
+  plt_layout_core.py          项目内独立布局求解器
+  plt_label_metrics.py        管理编号框尺寸计算
+tools/                        关联预检、余项分析、结果校验
+tests/                        规则及真实项目回归测试代码
 ```
 
-预检只计算关联、不重绘 PDF；完整校验读取现有单页 PDF 和内部转换记录，检查来源覆盖、字体颜色、框线布局、阀门中心及管段实际线条落点。当前回归样例来自 PD60，部分历史证据由测试从归档读取。
+布局核心从已验证的成达布局代码中提取保留，包含相互避让、跨线及分档引线长度惩罚；运行不再依赖旁边的 `parse-piping-sha` 项目。字体和 Python 依赖仍需安装。
 
-若交付 PDF 文件夹已重命名，校验时加 `--out-dir "实际PDF目录"`。例如 PD60 当前交付目录为 `北海项目/PLT文件转换/PD60/北海PD60_转换标注PDF`，整理时保留该目录。
+## 北海项目兼容与历史资料
 
-## 环境与适用范围
+原入口继续可用：`python run_beihai.py --unit PD20`，或 `.\run_beihai.ps1 -Unit PD20`。各单元参数位于 `profiles/beihai/units/`；运行前核对其中的输入路径、表格版本及明确的管线映射。
 
-使用 Python 3.10 或更新版本，依赖安装：`python -m pip install -r requirements.txt`。字体使用 Windows `SimHei`。
+历史资料与运行记录保存在本项目内的以下本地目录，不提交 Git：
 
-布局继续复用相邻 SHA 项目的成达代码，必须保留 `IDF解析` 同级的 `PCF解析/parse-piping-sha/profiles/chengda_indonesia/{parser,workflow}`。归档整理没有复制或替换该套布局算法。
+- `历史运行结果/archive/`：旧样例、PDF、问题表及源码快照。
+- `运行记录/`：已有定位记录、预检、调试及资源监测结果；北海兼容入口的后续运行记录也写到此处。
+- `历史运行结果/legacy_code/`：仅用于旧 PD60 运行历史汇总的辅助代码及整理前说明。
 
-当前配置已验证北海 A2 横向图框（材料栏在右）。同格式后续单元可复用；更换图框时应先检查配置与结果。
+可通过环境变量 `PLT_AUDIT_DIR` 指定北海入口和诊断工具的运行记录目录。通用入口始终将本次记录放到指定输出目录的 `.audit/`。生产出图不读取历史审计数据。
+
+测试代码保留；涉及实际项目的回归测试需要外部的北海原始资料或历史样例，数据不随代码分发。诊断工具分别为 `tools/preflight_beihai_annotations.py`、`tools/audit_beihai_remaining.py`、`tools/verify_beihai_outputs.py`。不再在新出图过程中自动追加旧 PD60 的历史轮次记录。

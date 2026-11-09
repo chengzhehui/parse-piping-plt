@@ -21,7 +21,7 @@ def main(argv=None):
         print('\n'.join(units))
         return 0
     environment = os.environ.copy()
-    environment.update(PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
+    environment.update(PYTHONUTF8='1', PYTHONIOENCODING='utf-8', PYTHONDONTWRITEBYTECODE='1')
     for key in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS'):
         environment[key] = '1'
     entry = repository / 'profiles/beihai/workflow/convert_beihai_plt_to_pdf.py'

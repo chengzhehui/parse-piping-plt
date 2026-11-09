@@ -1,0 +1,18 @@
+{
+  "page_workers": 8,
+  "spool_annotations": false,
+  "management_kinds": [
+    "support"
+  ],
+  "pdf_folder": "北海PD73_转换标注PDF",
+  "idf_pattern": "北海项目/PLT文件转换/{unit}/IDF",
+  "idf_coordinate_offset_mm": [
+    110200,
+    56600,
+    200
+  ],
+  "weld_reference_idf_pattern": "北海项目/IDF/{unit}",
+  "weld_reference_recovery": "ports",
+  "weld_interface_require_glyph": false,
+  "native_topology_ports": true
+}

@@ -45,6 +45,11 @@ def decode_plt(path: Path):
             kind = "setup_7_zero"
         elif op in (0, 10):
             kind = f"setup_{op}"
+        elif op == 2 and records and records[-1]['kind'] == 'setup_7_zero':
+            # Observed attribute state: 7,0,0,2 (normally 7,0,0,10).
+            # It has no coordinate operands. Retain its byte offset and do
+            # not move the pen; decode all following geometry as usual.
+            kind = 'setup_2_after_7_zero'
         elif op in (3, 4):
             x, y = words[i:i+2]
             i += 2

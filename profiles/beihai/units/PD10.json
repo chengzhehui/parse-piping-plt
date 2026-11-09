@@ -1,0 +1,19 @@
+{
+  "page_workers": 8,
+  "spool_annotations": false,
+  "management_kinds": [
+    "support"
+  ],
+  "pdf_folder": "北海PD10_转换标注PDF",
+  "idf_pattern": "北海项目/PLT文件转换/{unit}/PD10-IDF文件",
+  "hit_pattern": "北海项目/PLT文件转换/{unit}/PD10-HIT文件",
+  "table_pipeline_aliases": {
+    "40-NaOH-11605-204-ETHC": "40-NaOH-11605-204-ET/HC",
+    "50-NaOH-11604-204-ETHC": "50-NaOH-11604-204-ET/HC",
+    "80-NaOH-11603-204-ETHC": "80-NaOH-11603-204-ET/HC"
+  },
+  "weld_reference_idf_pattern": "北海项目/IDF/{unit}",
+  "weld_reference_recovery": "ports",
+  "weld_interface_require_glyph": false,
+  "native_topology_ports": true
+}

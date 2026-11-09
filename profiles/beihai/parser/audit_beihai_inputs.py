@@ -11,18 +11,22 @@ from openpyxl.styles import Alignment,Font,PatternFill
 from analyze_plt_bundle import decode_plt,read_export_text,read_hit
 from audit_pdms_export import read_csv,coordinate
 from beihai_geometry import load_model
+from beihai_unit_profile import remap_rows,hit_file
 
 
-def main(argv=None,save=True):
+def main(argv=None,save=True,pipeline_aliases=None,table_aliases=None,model_offset_mm=None,weld_transfers=None):
+    aliases=pipeline_aliases or {}
     root=WORKSPACE/'北海项目'
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--input-dir',type=Path,default=root/'PLT文件转换/PD60')
     ap.add_argument('--idf-dir',type=Path,default=root/'IDF/PD60')
+    ap.add_argument('--hit-dir',type=Path,help='独立HIT目录；不指定时读取PLT旁的同名HIT')
     ap.add_argument('--weld-table',type=Path,default=root/'焊口表.csv')
     args=ap.parse_args(argv)
     files=sorted(args.input_dir.rglob('*.plt'))
     lines=sorted({p.stem.rsplit('_Sht_',1)[0] for p in files})
     all_rows,_=read_csv(args.weld_table)
+    all_rows=remap_rows(all_rows,table_aliases if table_aliases is not None else aliases,weld_transfers)
     rows=[r for r in all_rows if r['管线号'] in lines]
     wb=Workbook();summary=wb.active;summary.title='检查结论'
     summary.append(['检查项','结果','说明'])
@@ -32,9 +36,9 @@ def main(argv=None,save=True):
         line=p.stem.rsplit('_Sht_',1)[0]
         try:
             decode_plt(p)
-            hit_count=len(read_hit(p.with_suffix('.hit')))
+            hit_count=len(read_hit(hit_file(p,args.hit_dir)))
             if not hit_count:empty.append(p.stem)
-            pages.append([p.stem,'通过',hit_count,(args.idf_dir/(line+'.idf')).is_file(),
+            pages.append([p.stem,'通过',hit_count,(args.idf_dir/(aliases.get(line,line)+'.idf')).is_file(),
                           'HIT为空；可能为材料续页，不能仅据此认定导出失败' if not hit_count else ''])
         except Exception as exc:
             errors.append(p.stem);pages.append([p.stem,'失败','','',str(exc)])
@@ -44,7 +48,7 @@ def main(argv=None,save=True):
     for line in lines:
         local=[r for r in rows if r['管线号']==line]
         try:
-            model=load_model(args.idf_dir/(line+'.idf'))
+            model=load_model(args.idf_dir/(aliases.get(line,line)+'.idf'),model_offset_mm)
         except Exception as exc:
             counts['IDF读取失败']+=len(local)
             coords.append([line,'','','',str(exc)])

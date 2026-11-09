@@ -27,11 +27,11 @@ def native_valve_bodies(data):
 def valve_body_center(component,hit,page):
     if not component or component['code']!=130 or len(component['ports'])!=2:
         raise ValueError('缺少阀门IDF两端，无法校验原图阀体中心')
-    expected={'VBFL':'bowtie-valve','CKFL':'check-valve-disc-and-seat','CKSW':'check-valve-disc-and-seat'}.get(component['skey'])
+    expected={'VBFL':'bowtie-valve','VTSW':'bowtie-valve','CKFL':'check-valve-disc-and-seat','CKSW':'check-valve-disc-and-seat'}.get(component['skey'])
     if not expected:raise ValueError('尚未适配阀门符号：'+component['skey'])
     a,b=component['ports'];dx,dy=projection([b[k]-a[k] for k in range(3)]);length=math.hypot(dx,dy)
     if length<.01:raise ValueError('阀门投影轴退化，无法校验阀体中心')
-    u=(dx/length,dy/length);root=(hit['x_mm'],hit['y_mm']);options=[]
+    u=(dx/length,dy/length);root=(hit['x_mm'],hit['y_mm']);options=[];center_options=[]
     for body in page.get('valve_bodies',[]):
         if body['shape']!=expected:continue
         v=(body['b'][0]-body['a'][0],body['b'][1]-body['a'][1]);span=math.hypot(*v)
@@ -40,7 +40,10 @@ def valve_body_center(component,hit,page):
         # disambiguates adjacent inline valves sharing the same flange region.
         terminal=max((body['a'],body['b']),key=lambda p:p[0]*u[0]+p[1]*u[1])
         error=math.dist(root,terminal)
+        center_error=math.dist(root,body['center'])
         if error<1.6:options.append((error,body))
+        if center_error<.15:center_options.append((center_error,body))
+    if not options:options=center_options
     options.sort(key=lambda x:x[0])
     if not options:raise ValueError('HIT附近未找到与IDF方向一致的阀体两端，需人工定位阀体中心')
     if len(options)>1 and abs(options[0][0]-options[1][0])<.2:
