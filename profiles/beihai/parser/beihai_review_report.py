@@ -95,6 +95,9 @@ def reviewer_workbook(wb,metadata=None):
                 action='与焊口'+','.join(others)+'对应同一图纸位置，请确认是否重复编号、接口合并或图表版本不一致。'
                 source_file,source_row=source_rows[(stem,'焊口',str(r[2]))]
                 required.append([stem,stem.rsplit('_Sht_',1)[1],'焊口',r[2],action,source_file,source_row])
+    for warning in (metadata or {}).get('source_drawing_issues',[]):
+        stem=warning['page_stem']
+        required.append([stem,stem.rsplit('_Sht_',1)[1],'图纸','',warning['reason'],warning['source_file'],''])
     if required:
         sheet=result.create_sheet('已标注需核对');sheet.append(['单页图号','页码','编号类型','编号','需核对事项','来源表','来源表行号'])
         for row in required:sheet.append(row)

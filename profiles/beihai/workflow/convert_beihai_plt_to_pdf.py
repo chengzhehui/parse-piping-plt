@@ -253,6 +253,7 @@ def main(argv=None):
                 *[counts.get(kind,0) for kind in ('valve','flange','support')]])
             for conflict in result['conflicts']:review.append([stem,stem.rsplit('_Sht_',1)[1],'布局','','joint-layout','',json.dumps(conflict,ensure_ascii=False)])
     metadata['performance']=monitor.summary
+    metadata['source_drawing_issues']=[dict(w,page_stem=r['stem']) for r in page_stats for w in r.get('source_warnings',[])]
     summary=sheet(wb,'本次转换汇总',['项目','数值','说明'])
     for k,v in [('输入管线',len(groups)),('输入PLT页数',sum(map(len,groups.values()))),('输出单页PDF',len(pdf_names)),
                 ('来源焊口',totals['source_welds']),('已定位焊口',totals['mapped_welds']),('未定位焊口',totals['unresolved_welds']),

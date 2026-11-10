@@ -12,6 +12,7 @@ from analyze_plt_bundle import decode_plt
 from pdms_weld_geometry import heavy_straight_segments
 from pdms_unified_layout import layout,render_svg
 from export_complete_pdms_pdf import export_pdf
+from pdms_source_warnings import native_source_warnings
 from verify_complete_pdms import crosses_box,intersects
 
 
@@ -55,4 +56,5 @@ def render_page_job(job):
             'process_rss_bytes':memory.rss,'process_peak_rss_bytes':getattr(memory,'peak_wset',memory.rss),
             'process_private_bytes':getattr(memory,'private',memory.rss),
             'mode':audit.get('layout_mode','无标注原图'),'conflicts':conflicts,'pdf_verified':okay,
-            'counts':dict(Counter(t['kind'] for t in targets))}
+            'counts':dict(Counter(t['kind'] for t in targets)),
+            'source_warnings':native_source_warnings(data)}

@@ -122,7 +122,7 @@ def main():
  for row in sheets['本次转换汇总']:
   if row[0]=='最终复绘页数':row[1:]=[len(changed),'本轮受影响页面联合布局复绘']
   if row[0]=='已验证复用页数':row[1:]=[len(plts)-len(changed),'复用页面SHA256保持不变']
- metadata=record['metadata'];metadata['report_coincident_welds']=True;metadata['weld_interface_evidence']=[{k:t[k] for k in ('pipeline','number','source_row','page_stem','x_mm','y_mm','interface_identity_evidence')} for t in current['mapped'] if t.get('interface_identity_evidence')]
+ metadata=record['metadata'];metadata['source_drawing_issues']=current.get('source_drawing_issues',metadata.get('source_drawing_issues',[]));metadata['report_coincident_welds']=True;metadata['weld_interface_evidence']=[{k:t[k] for k in ('pipeline','number','source_row','page_stem','x_mm','y_mm','interface_identity_evidence')} for t in current['mapped'] if t.get('interface_identity_evidence')]
  metadata['weld_reference_evidence']=[{k:t[k] for k in ('pipeline','number','source_row','page_stem','x_mm','y_mm','reference_geometry_evidence')} for t in current['mapped'] if t.get('reference_geometry_evidence')]
  metadata['weld_topology_evidence']=[{k:t[k] for k in ('pipeline','number','source_row','page_stem','x_mm','y_mm','native_topology_evidence')} for t in current['mapped'] if t.get('native_topology_evidence')]
  metadata['weld_singleton_evidence']=[{k:t[k] for k in ('pipeline','number','source_row','page_stem','x_mm','y_mm','coordinate_mm','mapping_evidence')} for t in current['mapped'] if t['mapping_method']=='beihai-single-pipe-single-native-axis-free-end']

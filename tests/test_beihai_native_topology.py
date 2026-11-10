@@ -15,6 +15,26 @@ from preflight_beihai_annotations import verify_declared_corrections
 
 
 class NativeTopologyTests(unittest.TestCase):
+    def test_coincident_nrsc_and_tee_ports_use_distinct_native_endpoints(self):
+        from beihai_port_assignment import owned_ports
+        for line,numbers,expected,ref in (
+            ('40-POW-89703-202-C1',('9','10'),((327.2,95.3),(313.7,103.1)),'47564/914'),
+            ('80-CHS-44101-106-C1',('14','22'),((322.,145.8),(332.,144.3)),'22988/22119'),
+            ('80-CHR-44101-106-C1',('13','1'),((173.9,117.5),(181.4,116.5)),'22988/22154')):
+            c,m,p=self.pipeline(line)
+            rows=remap_rows(read_csv(WORKSPACE/'北海项目/焊口表.csv')[0],{**c.get('pipeline_aliases',{}),**c.get('table_pipeline_aliases',{})},c.get('weld_pipeline_transfers'))
+            rows=[r for r in rows if r['管线号']==line];original=copy.deepcopy(rows)
+            mapped,missing=resolve_welds(rows,m,p,c,line,'PD20');by={t['number']:t for t in mapped}
+            self.assertEqual(tuple((by[n]['x_mm'],by[n]['y_mm']) for n in numbers),expected)
+            self.assertEqual(rows,original)
+            component=next(v for v in m['components'] if v['ref']==ref)
+            broken={stem:dict(page,heavy_segments=[]) for stem,page in p.items()}
+            self.assertEqual(owned_ports(component,m,broken,mapped),[])
+            if component['code']==126:
+                broken={stem:dict(page,port_outlines=[]) for stem,page in p.items()}
+                self.assertEqual(owned_ports(component,m,broken,mapped),[])
+                self.assertEqual(owned_ports(component,m,p,[]),[])
+
     def test_single_pipe_empty_hit_is_only_resolved_with_one_native_axis(self):
         _,m,p=self.pipeline('50-INI-22002-204');q={'coordinate_mm':[13100,12650,432]}
         result=singleton_pipe_candidates(q,m,p,native_axis_covers)

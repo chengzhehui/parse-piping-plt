@@ -24,6 +24,7 @@ from beihai_interface_identity import resolve_welds
 from beihai_review_report import audit_path
 from beihai_unit_profile import unit_config,remap_rows,configured_paths,hit_file,validate_coordinate_frame,verify_filename_alias,verify_alias,verify_configured_alias,validate_management_transfers
 from beihai_management import load_management_tables,resolve_management,LABEL_NAMES
+from pdms_source_warnings import native_source_warnings
 
 BASE=REPOSITORY
 ROOT=BASE.parent/'北海项目'
@@ -61,7 +62,8 @@ def pipeline_preflight(job):
         missing.append({'target':t,'diagnosis':unresolved_diagnosis(t,model,pages),'near_components':details,'pipe_interiors':interiors,
             'page_geometry_counts':{s:{'hits':len(p['hits']),'dots':len(p['dots']),'heavy_axes':len(p['heavy_segments'])} for s,p in pages.items()}})
     return {'line':line,'mapped':mapped,'missing':missing,'management_mapped':mt,'management_missing':mi,
-            'management_audit':ma,'management_review':mr,'management_counts':mc}
+            'management_audit':ma,'management_review':mr,'management_counts':mc,
+            'source_drawing_issues':[dict(w,page_stem=stem) for stem,page in pages.items() for w in native_source_warnings(page['data'])]}
 
 
 def verify_declared_corrections(changed,declarations):
@@ -106,7 +108,7 @@ def run(unit='PD60',revision='latest',baseline_workbook=None,workers=None,verifi
     tables=load_management_tables(ROOT,[k for k in ('valve','flange','support') if LABEL_NAMES[k] in baseline_kinds])
     for kind,table in tables.items():table['rows']=remap_rows(table['rows'],table_aliases,[t for t in config.get('management_pipeline_transfers',[]) if t['kind']==kind])
     management_mapped=[];management_missing=[];management_resolved=[];management_changed=[];management_lost=[]
-    management_audit=[];management_review=[];management_counts=Counter();jobs=[]
+    management_audit=[];management_review=[];management_counts=Counter();jobs=[];source_drawing_issues=[]
     for line,paths in sorted(groups.items()):
         scoped={kind:dict(table,rows=[r for r in table['rows'] if r['管线号']==line]) for kind,table in tables.items()}
         jobs.append({'line':line,'paths':sorted(paths),'paths_config':paths_config,'config':config,
@@ -115,6 +117,7 @@ def run(unit='PD60',revision='latest',baseline_workbook=None,workers=None,verifi
         results=executor.map(pipeline_preflight,jobs) if executor else map(pipeline_preflight,jobs)
         for index,result in enumerate(results,1):
             line=result['line'];mapped=result['mapped'];mt=result['management_mapped'];mi=result['management_missing']
+            source_drawing_issues.extend(result.get('source_drawing_issues',[]))
             management_mapped.extend(mt);management_missing.extend(mi)
             management_audit.extend(result['management_audit']);management_review.extend(result['management_review']);management_counts.update(result['management_counts'])
             for target in mt:
@@ -145,6 +148,7 @@ def run(unit='PD60',revision='latest',baseline_workbook=None,workers=None,verifi
                   management_lost_previous=management_lost)
     report.update(management_audit=management_audit,management_review=management_review,management_counts=dict(management_counts))
     report['coordinate_frame_evidence']=frame_evidence
+    report['source_drawing_issues']=source_drawing_issues
     report['workers']=workers
     declared=json.loads(Path(verified_corrections).read_text(encoding='utf-8')) if verified_corrections else []
     verified,unexpected,unused=verify_declared_corrections(changed,declared)

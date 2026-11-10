@@ -123,6 +123,8 @@ def resolve_welds(rows,model,pages,config=None,line=None,unit=None):
     from beihai_topology_ports import correct_topology_ports
     from beihai_geometry import native_axis_covers,pipe_chain_anchors
     mapped,missing=correct_topology_ports(rows,mapped,missing,model,pages,config or {},beihai_candidates,native_axis_covers,pipe_chain_anchors)
+    from beihai_port_assignment import correct_coincident_ports
+    correct_coincident_ports(mapped,model,pages)
     for t in mapped:
         transfer=next((r['_pipeline_transfer'] for r in rows if r['_row']==t['source_row'] and r.get('_pipeline_transfer')),None)
         if transfer:

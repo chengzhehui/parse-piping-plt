@@ -104,7 +104,8 @@ def verify_topology_evidence(record,source_by_row,mapped,plts,config,idf_dir):
     unit=record['metadata']['unit']
     evidence=record['metadata'].get('weld_topology_evidence',[])
     located={int(r[3]):r for r in mapped if r[1]=='焊口'}
-    corrected={key:r for key,r in located.items() if r[7]=='native-fitting-two-port-topology'}
+    from beihai_port_assignment import METHOD,owned_ports
+    corrected={key:r for key,r in located.items() if r[7] in ('native-fitting-two-port-topology',METHOD)}
     assert {t['source_row'] for t in evidence}==set(corrected) and len(evidence)==len(corrected),'元件端口拓扑证据遗漏'
     models={};pages={}
     for t in evidence:
@@ -116,6 +117,16 @@ def verify_topology_evidence(record,source_by_row,mapped,plts,config,idf_dir):
         model=models[line];component=[c for c in model['components'] if c['ref']==proof['component_ref']]
         assert len(component)==1;component=component[0]
         assert component['line']==proof['idf_line'] and math.dist(q,component['ports'][proof['model_port_index']])<.11
+        if located[t['source_row']][7]==METHOD:
+            controls=[{'source_row':key,'page_stem':r[0],'x_mm':r[5],'y_mm':r[6],
+                       'coordinate_mm':coordinate(source_by_row[key]['焊点位置']),'mapping_method':r[7]} for key,r in located.items()]
+            assignments=owned_ports(component,model,{stem:pages[stem]},controls)
+            actual=[a for a in assignments if a['model_port_index']==proof['model_port_index']]
+            assert len(actual)==1 and all(json.loads(json.dumps(actual[0][k]))==proof[k] for k in actual[0]),'元件端口归属证据无法复现'
+            row=corrected[t['source_row']]
+            assert row[0]==stem and math.dist(row[5:7],[actual[0]['x_mm'],actual[0]['y_mm']])<1e-6
+            assert source_by_row[t['source_row']]['焊点编号']==t['number']
+            continue
         actual=native_ports(component,model,{stem:pages[stem]})
         assert len(actual)==1 and json.loads(json.dumps(actual[0]))==proof['native_body'],'完整元件两端无法复现'
         connection=proof['connection'];control=located[connection['control_source_row']]
@@ -255,6 +266,12 @@ def main():
     interface_count=verify_interface_evidence(record,source_by_row,mapped,plts,config,args.unit,idf_dir) if record else 0
     reference_count=verify_reference_evidence(record,source_by_row,mapped,plts,config,args.unit,idf_dir) if record else 0
     topology_count=verify_topology_evidence(record,source_by_row,mapped,plts,config,idf_dir) if record else 0
+    source_warnings=record['metadata'].get('source_drawing_issues',[]) if record else []
+    from pdms_source_warnings import native_source_warnings
+    for warning in source_warnings:
+        stem=warning['page_stem']
+        actual=[dict(w,page_stem=stem) for w in native_source_warnings(decode_plt(plts[stem]))]
+        assert warning in actual,(stem,'源图FAIL标记或来源文件哈希无法复现')
     singleton_count=verify_singleton_evidence(record,source_by_row,mapped,plts,config,idf_dir) if record else 0
     source={(r['管线号'],r['焊点编号']) for r in rows if r['管线号'] in pipelines}
     located={(r[0].rsplit('_Sht_',1)[0],str(r[2])) for r in mapped if r[1]=='焊口'}
@@ -291,6 +308,7 @@ def main():
            'verified_interface_migrations':interface_count,
            'verified_reference_recoveries':reference_count,
            'verified_native_topology_ports':topology_count,
+           'verified_source_drawing_warnings':len(source_warnings),
            'verified_singleton_pipe_ends':singleton_count,
            'pdf_font_color_counts':'passed','source_coverage':'passed','layout_checks':'passed'})
     workbook.close()
